@@ -85,4 +85,4 @@ module.exports = {
    * See {@link Options.connectionTimeout}
    */
   connectionTimeout: 0,
-};
+}

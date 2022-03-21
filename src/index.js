@@ -6,14 +6,14 @@
  * @external Channel
  */
 
-const Channel = require('chnl');
+const Channel = require('chnl')
 // todo: maybe remove PromiseController and just use promised-map with 2 items?
-const PromiseController = require('promise-controller');
-const { PromisedMap } = require('promised-map');
+const PromiseController = require('promise-controller')
+const { PromisedMap } = require('promised-map')
 // todo: maybe remove Requests and just use promised-map?
-const Requests = require('./requests');
-const defaultOptions = require('./options');
-const {throwIf, isPromise} = require('./utils');
+const Requests = require('./requests')
+const defaultOptions = require('./options')
+const {throwIf, isPromise} = require('./utils')
 
 // see: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket#Ready_state_constants
 const STATE = {
@@ -21,7 +21,7 @@ const STATE = {
   OPEN: 1,
   CLOSING: 2,
   CLOSED: 3,
-};
+}
 
 /**
  * @typicalname wsp
@@ -34,17 +34,17 @@ class WebSocketAsPromised {
    * @param {String} url WebSocket URL
    * @param {Options} [options]
    */
-  constructor(url, options) {
-    this._assertOptions(options);
-    this._url = url;
-    this._options = Object.assign({}, defaultOptions, options);
-    this._requests = new Requests();
-    this._promisedMap = new PromisedMap();
-    this._ws = null;
-    this._wsSubscription = null;
-    this._createOpeningController();
-    this._createClosingController();
-    this._createChannels();
+  constructor (url, options) {
+    this._assertOptions(options)
+    this._url = url
+    this._options = Object.assign({}, defaultOptions, options)
+    this._requests = new Requests()
+    this._promisedMap = new PromisedMap()
+    this._ws = null
+    this._wsSubscription = null
+    this._createOpeningController()
+    this._createClosingController()
+    this._createChannels()
   }
 
   /**
@@ -52,8 +52,8 @@ class WebSocketAsPromised {
    *
    * @returns {WebSocket}
    */
-  get ws() {
-    return this._ws;
+  get ws () {
+    return this._ws
   }
 
   /**
@@ -61,8 +61,8 @@ class WebSocketAsPromised {
    *
    * @returns {String}
    */
-  get url() {
-    return this._url;
+  get url () {
+    return this._url
   }
 
   /**
@@ -70,8 +70,8 @@ class WebSocketAsPromised {
    *
    * @returns {Boolean}
    */
-  get isOpening() {
-    return Boolean(this._ws && this._ws.readyState === STATE.CONNECTING);
+  get isOpening () {
+    return Boolean(this._ws && this._ws.readyState === STATE.CONNECTING)
   }
 
   /**
@@ -79,8 +79,8 @@ class WebSocketAsPromised {
    *
    * @returns {Boolean}
    */
-  get isOpened() {
-    return Boolean(this._ws && this._ws.readyState === STATE.OPEN);
+  get isOpened () {
+    return Boolean(this._ws && this._ws.readyState === STATE.OPEN)
   }
 
   /**
@@ -88,8 +88,8 @@ class WebSocketAsPromised {
    *
    * @returns {Boolean}
    */
-  get isClosing() {
-    return Boolean(this._ws && this._ws.readyState === STATE.CLOSING);
+  get isClosing () {
+    return Boolean(this._ws && this._ws.readyState === STATE.CLOSING)
   }
 
   /**
@@ -97,8 +97,8 @@ class WebSocketAsPromised {
    *
    * @returns {Boolean}
    */
-  get isClosed() {
-    return Boolean(!this._ws || this._ws.readyState === STATE.CLOSED);
+  get isClosed () {
+    return Boolean(!this._ws || this._ws.readyState === STATE.CLOSED)
   }
 
   /**
@@ -110,8 +110,8 @@ class WebSocketAsPromised {
    *
    * @returns {Channel}
    */
-  get onOpen() {
-    return this._onOpen;
+  get onOpen () {
+    return this._onOpen
   }
 
   /**
@@ -123,8 +123,8 @@ class WebSocketAsPromised {
    *
    * @returns {Channel}
    */
-  get onSend() {
-    return this._onSend;
+  get onSend () {
+    return this._onSend
   }
 
   /**
@@ -136,8 +136,8 @@ class WebSocketAsPromised {
    *
    * @returns {Channel}
    */
-  get onMessage() {
-    return this._onMessage;
+  get onMessage () {
+    return this._onMessage
   }
 
   /**
@@ -150,8 +150,8 @@ class WebSocketAsPromised {
    *
    * @returns {Channel}
    */
-  get onUnpackedMessage() {
-    return this._onUnpackedMessage;
+  get onUnpackedMessage () {
+    return this._onUnpackedMessage
   }
 
   /**
@@ -164,8 +164,8 @@ class WebSocketAsPromised {
    *
    * @returns {Channel}
    */
-  get onResponse() {
-    return this._onResponse;
+  get onResponse () {
+    return this._onResponse
   }
 
   /**
@@ -178,8 +178,8 @@ class WebSocketAsPromised {
    *
    * @returns {Channel}
    */
-  get onClose() {
-    return this._onClose;
+  get onClose () {
+    return this._onClose
   }
 
   /**
@@ -191,8 +191,8 @@ class WebSocketAsPromised {
    *
    * @returns {Channel}
    */
-  get onError() {
-    return this._onError;
+  get onError () {
+    return this._onError
   }
 
   /**
@@ -200,17 +200,17 @@ class WebSocketAsPromised {
    *
    * @returns {Promise<Event>}
    */
-  open() {
+  open () {
     if (this.isClosing) {
-      return Promise.reject(new Error(`Can't open WebSocket while closing.`));
+      return Promise.reject(new Error(`Can't open WebSocket while closing.`))
     }
     if (this.isOpened) {
-      return this._opening.promise;
+      return this._opening.promise
     }
     return this._opening.call(() => {
-      this._opening.promise.catch(e => this._cleanup(e));
-      this._createWS();
-    });
+      this._opening.promise.catch(e => this._cleanup(e))
+      this._createWS()
+    })
   }
 
   /**
@@ -222,14 +222,14 @@ class WebSocketAsPromised {
    * @param {Number} [options.timeout=0]
    * @returns {Promise}
    */
-  sendRequest(data, options = {}) {
-    const requestId = options.requestId || `${Math.random()}`;
-    const timeout = options.timeout !== undefined ? options.timeout : this._options.timeout;
+  sendRequest (data, options = {}) {
+    const requestId = options.requestId || `${Math.random()}`
+    const timeout = options.timeout !== undefined ? options.timeout : this._options.timeout
     return this._requests.create(requestId, () => {
-      this._assertRequestIdHandlers();
-      const finalData = this._options.attachRequestId(data, requestId);
-      this.sendPacked(finalData);
-    }, timeout);
+      this._assertRequestIdHandlers()
+      const finalData = this._options.attachRequestId(data, requestId)
+      this.sendPacked(finalData)
+    }, timeout)
   }
 
   /**
@@ -237,10 +237,10 @@ class WebSocketAsPromised {
    *
    * @param {*} data
    */
-  sendPacked(data) {
-    this._assertPackingHandlers();
-    const message = this._options.packMessage(data);
-    this.send(message);
+  sendPacked (data) {
+    this._assertPackingHandlers()
+    const message = this._options.packMessage(data)
+    this.send(message)
   }
 
   /**
@@ -248,10 +248,10 @@ class WebSocketAsPromised {
    *
    * @param {String|Blob|ArrayBuffer} data
    */
-  send(data) {
-    throwIf(!this.isOpened, `Can't send data because WebSocket is not opened.`);
-    this._ws.send(data);
-    this._onSend.dispatchAsync(data);
+  send (data) {
+    throwIf(!this.isOpened, `Can't send data because WebSocket is not opened.`)
+    this._ws.send(data)
+    this._onSend.dispatchAsync(data)
   }
 
   /**
@@ -266,17 +266,17 @@ class WebSocketAsPromised {
    * @example
    * const response = await wsp.waitUnpackedMessage(data => data && data.foo === 'bar');
    */
-  waitUnpackedMessage(predicate, options = {}) {
-    throwIf(typeof predicate !== 'function', `Predicate must be a function, got ${typeof predicate}`);
+  waitUnpackedMessage (predicate, options = {}) {
+    throwIf(typeof predicate !== 'function', `Predicate must be a function, got ${typeof predicate}`)
     if (options.timeout) {
       setTimeout(() => {
         if (this._promisedMap.has(predicate)) {
-          const error = options.timeoutError || new Error('Timeout');
-          this._promisedMap.reject(predicate, error);
+          const error = options.timeoutError || new Error('Timeout')
+          this._promisedMap.reject(predicate, error)
         }
-      }, options.timeout);
+      }, options.timeout)
     }
-    return this._promisedMap.set(predicate);
+    return this._promisedMap.set(predicate)
   }
 
   /**
@@ -286,165 +286,165 @@ class WebSocketAsPromised {
    * @param {string=} [reason] A human-readable reason for closing connection.
    * @returns {Promise<Event>}
    */
-  close(code, reason) { // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close
+  close (code, reason) { // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close
     return this.isClosed
       ? Promise.resolve(this._closing.value)
-      : this._closing.call(() => this._ws.close(code, reason));
+      : this._closing.call(() => this._ws.close(code, reason))
   }
 
   /**
    * Removes all listeners from WSP instance. Useful for cleanup.
    */
-  removeAllListeners() {
-    this._onOpen.removeAllListeners();
-    this._onMessage.removeAllListeners();
-    this._onUnpackedMessage.removeAllListeners();
-    this._onResponse.removeAllListeners();
-    this._onSend.removeAllListeners();
-    this._onClose.removeAllListeners();
-    this._onError.removeAllListeners();
+  removeAllListeners () {
+    this._onOpen.removeAllListeners()
+    this._onMessage.removeAllListeners()
+    this._onUnpackedMessage.removeAllListeners()
+    this._onResponse.removeAllListeners()
+    this._onSend.removeAllListeners()
+    this._onClose.removeAllListeners()
+    this._onError.removeAllListeners()
   }
 
-  _createOpeningController() {
-    const connectionTimeout = this._options.connectionTimeout || this._options.timeout;
+  _createOpeningController () {
+    const connectionTimeout = this._options.connectionTimeout || this._options.timeout
     this._opening = new PromiseController({
       timeout: connectionTimeout,
       timeoutReason: `Can't open WebSocket within allowed timeout: ${connectionTimeout} ms.`
-    });
+    })
   }
 
-  _createClosingController() {
-    const closingTimeout = this._options.timeout;
+  _createClosingController () {
+    const closingTimeout = this._options.timeout
     this._closing = new PromiseController({
       timeout: closingTimeout,
       timeoutReason: `Can't close WebSocket within allowed timeout: ${closingTimeout} ms.`
-    });
+    })
   }
 
-  _createChannels() {
-    this._onOpen = new Channel();
-    this._onMessage = new Channel();
-    this._onUnpackedMessage = new Channel();
-    this._onResponse = new Channel();
-    this._onSend = new Channel();
-    this._onClose = new Channel();
-    this._onError = new Channel();
+  _createChannels () {
+    this._onOpen = new Channel()
+    this._onMessage = new Channel()
+    this._onUnpackedMessage = new Channel()
+    this._onResponse = new Channel()
+    this._onSend = new Channel()
+    this._onClose = new Channel()
+    this._onError = new Channel()
   }
 
-  _createWS() {
-    this._ws = this._options.createWebSocket(this._url);
+  _createWS () {
+    this._ws = this._options.createWebSocket(this._url)
     this._wsSubscription = new Channel.Subscription([
       { channel: this._ws, event: 'open', listener: e => this._handleOpen(e) },
       { channel: this._ws, event: 'message', listener: e => this._handleMessage(e) },
       { channel: this._ws, event: 'error', listener: e => this._handleError(e) },
       { channel: this._ws, event: 'close', listener: e => this._handleClose(e) },
-    ]).on();
+    ]).on()
   }
 
-  _handleOpen(event) {
-    this._onOpen.dispatchAsync(event);
-    this._opening.resolve(event);
+  _handleOpen (event) {
+    this._onOpen.dispatchAsync(event)
+    this._opening.resolve(event)
   }
 
-  _handleMessage(event) {
-    const data = this._options.extractMessageData(event);
-    this._onMessage.dispatchAsync(data);
-    this._tryUnpack(data);
+  _handleMessage (event) {
+    const data = this._options.extractMessageData(event)
+    this._onMessage.dispatchAsync(data)
+    this._tryUnpack(data)
   }
 
-  _tryUnpack(data) {
+  _tryUnpack (data) {
     if (this._options.unpackMessage) {
-      data = this._options.unpackMessage(data);
+      data = this._options.unpackMessage(data)
       if (isPromise(data)) {
-        data.then(data => this._handleUnpackedData(data));
+        data.then(data => this._handleUnpackedData(data))
       } else {
-        this._handleUnpackedData(data);
+        this._handleUnpackedData(data)
       }
     }
   }
 
-  _handleUnpackedData(data) {
+  _handleUnpackedData (data) {
     if (data !== undefined) {
       // todo: maybe trigger onUnpackedMessage always?
-      this._onUnpackedMessage.dispatchAsync(data);
-      this._tryHandleResponse(data);
+      this._onUnpackedMessage.dispatchAsync(data)
+      this._tryHandleResponse(data)
     }
-    this._tryHandleWaitingMessage(data);
+    this._tryHandleWaitingMessage(data)
   }
 
-  _tryHandleResponse(data) {
+  _tryHandleResponse (data) {
     if (this._options.extractRequestId) {
-      const requestId = this._options.extractRequestId(data);
+      const requestId = this._options.extractRequestId(data)
       if (requestId) {
-        this._onResponse.dispatchAsync(data, requestId);
-        this._requests.resolve(requestId, data);
+        this._onResponse.dispatchAsync(data, requestId)
+        this._requests.resolve(requestId, data)
       }
     }
   }
 
-  _tryHandleWaitingMessage(data) {
+  _tryHandleWaitingMessage (data) {
     this._promisedMap.forEach((_, predicate) => {
-      let isMatched = false;
+      let isMatched = false
       try {
-        isMatched = predicate(data);
+        isMatched = predicate(data)
       } catch (e) {
-        this._promisedMap.reject(predicate, e);
-        return;
+        this._promisedMap.reject(predicate, e)
+        return
       }
       if (isMatched) {
-        this._promisedMap.resolve(predicate, data);
+        this._promisedMap.resolve(predicate, data)
       }
-    });
+    })
   }
 
-  _handleError(event) {
-    this._onError.dispatchAsync(event);
+  _handleError (event) {
+    this._onError.dispatchAsync(event)
   }
 
-  _handleClose(event) {
-    this._onClose.dispatchAsync(event);
-    this._closing.resolve(event);
-    const error = new Error(`WebSocket closed with reason: ${event.reason} (${event.code}).`);
+  _handleClose (event) {
+    this._onClose.dispatchAsync(event)
+    this._closing.resolve(event)
+    const error = new Error(`WebSocket closed with reason: ${event.reason} (${event.code}).`)
     if (this._opening.isPending) {
-      this._opening.reject(error);
+      this._opening.reject(error)
     }
-    this._cleanup(error);
+    this._cleanup(error)
   }
 
-  _cleanupWS() {
+  _cleanupWS () {
     if (this._wsSubscription) {
-      this._wsSubscription.off();
-      this._wsSubscription = null;
+      this._wsSubscription.off()
+      this._wsSubscription = null
     }
-    this._ws = null;
+    this._ws = null
   }
 
-  _cleanup(error) {
-    this._cleanupWS();
-    this._requests.rejectAll(error);
+  _cleanup (error) {
+    this._cleanupWS()
+    this._requests.rejectAll(error)
   }
 
-  _assertOptions(options) {
+  _assertOptions (options) {
     Object.keys(options || {}).forEach(key => {
       if (!defaultOptions.hasOwnProperty(key)) {
-        throw new Error(`Unknown option: ${key}`);
+        throw new Error(`Unknown option: ${key}`)
       }
-    });
+    })
   }
 
-  _assertPackingHandlers() {
-    const { packMessage, unpackMessage } = this._options;
+  _assertPackingHandlers () {
+    const { packMessage, unpackMessage } = this._options
     throwIf(!packMessage || !unpackMessage,
       `Please define 'options.packMessage / options.unpackMessage' for sending packed messages.`
-    );
+    )
   }
 
-  _assertRequestIdHandlers() {
-    const { attachRequestId, extractRequestId } = this._options;
+  _assertRequestIdHandlers () {
+    const { attachRequestId, extractRequestId } = this._options
     throwIf(!attachRequestId || !extractRequestId,
       `Please define 'options.attachRequestId / options.extractRequestId' for sending requests.`
-    );
+    )
   }
 }
 
-module.exports = WebSocketAsPromised;
+module.exports = WebSocketAsPromised

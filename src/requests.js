@@ -3,12 +3,12 @@
  * @private
  */
 
-const PromiseController = require('promise-controller');
-const promiseFinally = require('promise.prototype.finally');
+const PromiseController = require('promise-controller')
+const promiseFinally = require('promise.prototype.finally')
 
 module.exports = class Requests {
-  constructor() {
-    this._items = new Map();
+  constructor () {
+    this._items = new Map()
   }
 
   /**
@@ -19,41 +19,41 @@ module.exports = class Requests {
    * @param {Number} timeout
    * @returns {Promise}
    */
-  create(requestId, fn, timeout) {
-    this._rejectExistingRequest(requestId);
-    return this._createNewRequest(requestId, fn, timeout);
+  create (requestId, fn, timeout) {
+    this._rejectExistingRequest(requestId)
+    return this._createNewRequest(requestId, fn, timeout)
   }
 
-  resolve(requestId, data) {
+  resolve (requestId, data) {
     if (requestId && this._items.has(requestId)) {
-      this._items.get(requestId).resolve(data);
+      this._items.get(requestId).resolve(data)
     }
   }
 
-  rejectAll(error) {
-    this._items.forEach(request => request.isPending ? request.reject(error) : null);
+  rejectAll (error) {
+    this._items.forEach(request => request.isPending ? request.reject(error) : null)
   }
 
-  _rejectExistingRequest(requestId) {
-    const existingRequest = this._items.get(requestId);
+  _rejectExistingRequest (requestId) {
+    const existingRequest = this._items.get(requestId)
     if (existingRequest && existingRequest.isPending) {
-      existingRequest.reject(new Error(`WebSocket request is replaced, id: ${requestId}`));
+      existingRequest.reject(new Error(`WebSocket request is replaced, id: ${requestId}`))
     }
   }
 
-  _createNewRequest(requestId, fn, timeout) {
+  _createNewRequest (requestId, fn, timeout) {
     const request = new PromiseController({
       timeout,
       timeoutReason: `WebSocket request was rejected by timeout (${timeout} ms). RequestId: ${requestId}`
-    });
-    this._items.set(requestId, request);
-    return promiseFinally(request.call(fn), () => this._deleteRequest(requestId, request));
+    })
+    this._items.set(requestId, request)
+    return promiseFinally(request.call(fn), () => this._deleteRequest(requestId, request))
   }
 
-  _deleteRequest(requestId, request) {
+  _deleteRequest (requestId, request) {
     // this check is important when request was replaced
     if (this._items.get(requestId) === request) {
-      this._items.delete(requestId);
+      this._items.delete(requestId)
     }
   }
-};
+}
